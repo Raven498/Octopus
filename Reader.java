@@ -11,7 +11,10 @@ public class Reader{
         try{
             while(scanner.hasNextLine()){
                 String line = scanner.nextLine();
-                code.add(line);
+                line.split(" ");
+                for(String word : line){
+                    code.add(word);
+                }
             }
             scanner.close();
         } catch(FileNotFoundException e){

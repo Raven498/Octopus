@@ -1,11 +1,11 @@
 new Servo:
-- Servo (1):
+- Servo1:
     - int pos, int rpm
-    - void setPos(int pos), void setRpm(int rpm), int getPos(), int getRpm(), int calcRevs(int pos);
+    - void setPos(int pos), void setRpm(int rpm), int getPos(), int getRpm(), int calcRevs(int pos)
 END
 
 create --> Servo(servo):
 - Servo (1): servo
 END
 
-servo --> servo.getPos()
+servo --> servo.getPos() END

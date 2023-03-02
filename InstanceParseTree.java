@@ -9,5 +9,6 @@ public class InstanceParseTree{
     public ArrayList<String> BI = new ArrayList<>();
     public ArrayList<String> B_returns = new ArrayList<>();
     public ArrayList<String> B_params = new ArrayList<>();
+    public ArrayList<String> B_paramtypes = new ArrayList<>();
     public ArrayList<String> B_access = new ArrayList<>();
 }
