@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 public class InstanceCommandParseTree{
     public ArrayList<String> INI = new ArrayList<>();
     public ArrayList<String> IM = new ArrayList<>();
