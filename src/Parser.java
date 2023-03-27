@@ -5,7 +5,8 @@ public class Parser{
    private final String[] filter = {":", "(", ")", ","};
    private int cursor = 0;
    private Map<String, String> keys = new HashMap<>();
-
+   private ArrayList<ModelParseTree> MPTs = new ArrayList<>();
+   private ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
 
    public Parser(ArrayList<String> code){
        keys.put("Model-Key", "new");
@@ -103,8 +104,9 @@ public class Parser{
                    s_delta_A_access.add(p_delta_A_access);
                    s_delta_A_types.add(p_delta_A_types);
                    s_delta_AI.add(p_delta_AI);
+               } else{
+                  cursor += 1;
                }
-               cursor += 1;
            }
 
            //Turns on behavior mode - prevents outer loop from slipping back to attributes
@@ -146,13 +148,13 @@ public class Parser{
                while(true){
                     p_delta_B_paramtypes = code.get(cursor);
                     cursor += 1;
-                    p_delta_B_params = code.get(cursor);
+                    p_delta_B_params = filter(code.get(cursor));
                     s_delta_B_params.add(p_delta_B_params);
                     s_delta_B_paramtypes.add(p_delta_B_paramtypes);
                     if(code.get(cursor).contains(keys.get("Model-B-End-Key"))) {
                         break;
                     }
-                   cursor += 1;
+                    cursor += 1;
                }
 
                //Behavior Delta Types - tertiary deltas used for param processing
@@ -180,12 +182,77 @@ public class Parser{
    public InstanceParseTree ISP(){
        final InstanceParseTree instPT = new InstanceParseTree();
 
+       //Preprocessing
+       String[] header_el = code.get(cursor).split("(");
+       instPT.INM = header_el[0];
+       instPT.INI = filter(header_el[1]);
+
+       String p_delta_in_members = "";
+       String p_delta_def_members = "";
+       
+       ArrayList<String> s_delta_in_members = new ArrayList<>();
+       ArrayList<String> s_delta_def_members = new ArrayList<>();
+
+       //No primary deltas for DefMem Lists - not coming from the code
+       ArrayList<ArrayList<String>> s_delta_AI = new ArrayList<>();
+       ArrayList<ArrayList<String>> s_delta_A_types = new ArrayList<>();
+       ArrayList<ArrayList<String>> s_delta_A_access = new ArrayList<>();
+       ArrayList<ArrayList<String>> s_delta_BI = new ArrayList<>();
+       ArrayList<ArrayList<String>> s_delta_B_access = new ArrayList<>();
+       ArrayList<ArrayList<String>> s_delta_B_returns = new ArrayList<>();
+       ArrayList<ArrayList<ArrayList<String>>> s_delta_B_params = new ArrayList<>();
+       ArrayList<ArrayList<ArrayList<String>>> s_delta_B_paramtypes = new ArrayList<>();
+
+       /*
+        Syntax Process Loop
+       */
+       while(!code.get(cursor + 1).equals(keys.get("Terminate-Key"))){
+           cursor += 1;
+           //Skips indentation
+           while(code.get(cursor).equals("")){
+               cursor += 1;
+           }
+           cursor += 1;
+           p_delta_in_members = filter(code.get(cursor));
+           cursor += 1;
+           p_delta_def_members = filter(code.get(cursor));
+
+           s_delta_in_members.add(p_delta_in_members);
+           s_delta_def_members.add(p_delta_def_members);
+
+           //Look up all lists for the current Def Member
+           for(MPT mpt : MPTs){
+               for(String defmem : mpt.DefMembers){
+                   if(p_delta_def_members.equals(defmem)){
+                       int defmem_index = mpt.DefMembers.indexOf(defmem);
+                       s_delta_AI.add(mpt.AI[index]);
+                       s_delta_A_types.add(mpt.A_types[index]);
+                       s_delta_A_access.add(mpt.A_access[index]);
+                       s_delta_BI.add(mpt.BI[index]);
+                       s_delta_B_returns.add(mpt.B_returns[index]);
+                       s_delta_B_access.add(mpt.B_access[index]);
+                       s_delta_B_params.add(mpt.B_params[index]);
+                       s_delta_B_paramtypes.add(mpt.B_paramtypes[index]);
+                   }
+               }
+           }
+       }
+
+       //InstancePT Updates
+       instPT.In_Members = s_delta_in_members;
+       instPT.DefMembers = s_delta_def_members;
+       instPT.AI = s_delta_AI;
+       instPT.A_types = s_delta_A_types;
+       instPT.A_access = s_delta_A_access;
+       instPT.BI = s_delta_BI;
+       instPT.B_returns = s_delta_B_returns;
+       instPT.B_access = s_delta_B_access;
+       instPT.B_params = s_delta_B_params;
+       instPT.B_paramtypes = s_delta_B_paramtypes;
        return instPT;
    }
 
    public void parse(){
-       ArrayList<ModelParseTree> MPTs = new ArrayList<>();
-       ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
        for(cursor = 0; cursor < code.size(); cursor++){
            if(code.get(cursor).equals(keys.get("Model-Key"))){
                cursor += 1;
@@ -194,7 +261,7 @@ public class Parser{
                System.out.println(mpt.toString());
            }
            else if(code.get(cursor).equals(keys.get("In-Key"))){
-               cursor += 1;
+               cursor += 2;
                ISP();
                ModelParseTree mpt = MSP();
                MPTs.add(mpt);
