@@ -6,3 +6,8 @@ new Robot:
     - int pos_left, int pos_right
     - void setPosLeft(int posLeft, int choice), void setPosRight(int posRight), int walk(int distance)
 END
+
+create -> Robot(robot):
+    - FlyingServo: flyServo
+    - WalkingServo: walkServo
+END

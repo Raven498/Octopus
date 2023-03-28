@@ -12,4 +12,8 @@ public class InstanceParseTree{
     public ArrayList<ArrayList<ArrayList<String>>> B_params = new ArrayList<>();
     public ArrayList<ArrayList<ArrayList<String>>> B_paramtypes = new ArrayList<>();
     public ArrayList<ArrayList<String>> B_access = new ArrayList<>();
+
+    public String toString(){
+        return INM + " " + INI + " " + In_Members + " " + DefMembers + " " + AI + " " + A_types + " " + A_access + " " + BI + " " + B_returns + " " + B_params + " " + B_paramtypes + " " + B_access;
+    }
 }

@@ -101,7 +101,6 @@ public class Parser{
                        p_delta_A_access = code.get(cursor);
                        cursor += 1;
                        p_delta_A_types = code.get(cursor);
-                       cursor += 1;
                    }
                    p_delta_AI = filter(code.get(cursor));
 
@@ -109,9 +108,8 @@ public class Parser{
                    s_delta_A_access.add(p_delta_A_access);
                    s_delta_A_types.add(p_delta_A_types);
                    s_delta_AI.add(p_delta_AI);
-               } else{
-                  cursor += 1;
                }
+               cursor += 1;
            }
 
            //Turns on behavior mode - prevents outer loop from slipping back to attributes
@@ -257,9 +255,9 @@ public class Parser{
                cursor += 1;
            }
            cursor += 1;
-           p_delta_in_members = filter(code.get(cursor));
-           cursor += 1;
            p_delta_def_members = filter(code.get(cursor));
+           cursor += 1;
+           p_delta_in_members = filter(code.get(cursor));
 
            s_delta_in_members.add(p_delta_in_members);
            s_delta_def_members.add(p_delta_def_members);
@@ -306,9 +304,9 @@ public class Parser{
            }
            else if(code.get(cursor).equals(keys.get("In-Key"))){
                cursor += 2;
-               ISP();
-               ModelParseTree mpt = MSP();
-               MPTs.add(mpt);
+               InstanceParseTree ipt = ISP();
+               IPTs.add(ipt);
+               System.out.println(ipt.toString());
            }
        }
    }
