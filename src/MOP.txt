@@ -1,5 +1,8 @@
-new Servo:
-- Servo1:
-    - int pos, int rpm
-    - void setPos(int pos), void setRpm(int rpm), int getPos(), int getRpm(), int calcRevs(int pos)
+new Robot:
+-> FlyingServo:
+    - int speed, int flapPos, int glidePos int wingNum
+    - void createWings(), void fly()
+-> WalkingServo:
+    - int pos_left, int pos_right
+    - void setPosLeft(int posLeft, int choice), void setPosRight(int posRight), int walk(int distance)
 END

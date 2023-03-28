@@ -10,10 +10,11 @@ public class Parser{
    public Parser(ArrayList<String> code){
        keys.put("Model-Key", "new");
        keys.put("Model-B-Key", "-");
+       keys.put("Model-B-End-Key", ")");
+       keys.put("Model-DefMember-Key", "->");
        keys.put("In-Key", "create");
        keys.put("IC-Key", "-->");
        keys.put("Terminate-Key", "END");
-       keys.put("Model-B-End-Key", ")");
        this.code = code;
    }
 
@@ -38,12 +39,10 @@ public class Parser{
        final String[] bad_access = {"int", "boolean", "string", "double", "void"}; //Change this to retrieve data type keywords from Executor
 
        /*
-       Preprocessing - processes the header of the Model definition
-       Includes Model Identifier (MI)
+       Preprocessing - processes the model identifier (MI), 1st Def Member
         */
        modelPT.MI = filter(code.get(cursor));
        cursor += 2;
-       //TODO: Move to Syntax Process Loop
        modelPT.DefMembers.add(filter(code.get(cursor)));
        cursor += 6;
 
@@ -54,8 +53,8 @@ public class Parser{
        String p_delta_B_access = "";
        String p_delta_B_returns = "";
        String p_delta_BI = "";
-       String p_delta_B_paramtypes = "";
        String p_delta_B_params = "";
+       String p_delta_B_paramtypes = "";
 
        //Secondary Delta Variable declarations
        ArrayList<String> s_delta_A_access = new ArrayList<>();
@@ -64,12 +63,20 @@ public class Parser{
        ArrayList<String> s_delta_B_access = new ArrayList<>();
        ArrayList<String> s_delta_B_returns = new ArrayList<>();
        ArrayList<String> s_delta_BI = new ArrayList<>();
-       ArrayList<String> s_delta_B_paramtypes = new ArrayList<>();
-       ArrayList<String> s_delta_B_params = new ArrayList<>();
 
        //Tertiary Delta Variable declarations
+       ArrayList<ArrayList<String>> t_delta_A_access = new ArrayList<>();
+       ArrayList<ArrayList<String>> t_delta_AI = new ArrayList<>();
+       ArrayList<ArrayList<String>> t_delta_A_types = new ArrayList<>();
+       ArrayList<ArrayList<String>> t_delta_B_access = new ArrayList<>();
+       ArrayList<ArrayList<String>> t_delta_B_returns = new ArrayList<>();
+       ArrayList<ArrayList<String>> t_delta_BI = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_B_paramtypes = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_B_params = new ArrayList<>();
+
+       //Quaternary Delta Variable declarations
+       ArrayList<ArrayList<ArrayList<String>>> q_delta_B_paramtypes = new ArrayList<>();
+       ArrayList<ArrayList<ArrayList<String>>> q_delta_B_params = new ArrayList<>();
 
        /*
        Turned on when MSP reaches behaviors
@@ -79,9 +86,8 @@ public class Parser{
 
        /*
        Syntax Process Loop
-       Processes Attributes and Behaviors
+       Processes DefMembers, Attributes and Behaviors
         */
-       //TODO: Implement filtering
        while(!code.get(cursor + 1).equals(keys.get("Terminate-Key"))){
            //Attributes Section
            while(!behavior_mode && !(code.get(cursor).equals(keys.get("Model-B-Key")))){
@@ -97,9 +103,8 @@ public class Parser{
                        cursor += 1;
                    }
                    p_delta_AI = filter(code.get(cursor));
-                   cursor += 1;
 
-                   //Attribute Delta Updates
+                   //Attribute Secondary Delta Updates
                    s_delta_A_access.add(p_delta_A_access);
                    s_delta_A_types.add(p_delta_A_types);
                    s_delta_AI.add(p_delta_AI);
@@ -110,6 +115,9 @@ public class Parser{
            //Turns on behavior mode - prevents outer loop from slipping back to attributes
            behavior_mode = true;
            cursor += 1;
+
+           ArrayList<String> s_delta_B_paramtypes = new ArrayList<>();
+           ArrayList<String> s_delta_B_params = new ArrayList<>();
 
            //Behavior Section
            if(Arrays.asList(bad_access).contains(code.get(cursor))){
@@ -124,6 +132,7 @@ public class Parser{
            }
 
            if(code.get(cursor).contains("()")){
+               p_delta_BI = filter(code.get(cursor));
                p_delta_B_paramtypes = "void";
                p_delta_B_params = "void";
                s_delta_B_params.add(p_delta_B_params);
@@ -142,39 +151,74 @@ public class Parser{
                code.set(cursor, delta_elements[0]);
                code.add(cursor + 1, delta_elements[1]);
                cursor += 1;
-               //Param processing - tertiary deltas are used b/c of this
+
+               //Param processing
                while(true){
-                    p_delta_B_paramtypes = code.get(cursor);
-                    cursor += 1;
-                    p_delta_B_params = code.get(cursor);
-                    s_delta_B_params.add(p_delta_B_params);
-                    s_delta_B_paramtypes.add(p_delta_B_paramtypes);
-                    if(code.get(cursor).contains(keys.get("Model-B-End-Key"))) {
-                        break;
-                    }
+                   p_delta_B_paramtypes = code.get(cursor);
+                   cursor += 1;
+                   p_delta_B_params = filter(code.get(cursor));
+                   s_delta_B_params.add(p_delta_B_params);
+                   s_delta_B_paramtypes.add(p_delta_B_paramtypes);
+                   if(code.get(cursor).contains(keys.get("Model-B-End-Key"))) {
+                       break;
+                   }
                    cursor += 1;
                }
-
-               //Behavior Delta Types - tertiary deltas used for param processing
-               s_delta_BI.add(p_delta_BI);
-               s_delta_B_access.add(p_delta_B_access);
-               s_delta_B_returns.add(p_delta_B_returns);
-               t_delta_B_params.add(s_delta_B_params);
-               t_delta_B_paramtypes.add(s_delta_B_paramtypes);
            }
-        }
+
+           //Behavior Secondary Delta Updates
+           s_delta_BI.add(p_delta_BI);
+           s_delta_B_access.add(p_delta_B_access);
+           s_delta_B_returns.add(p_delta_B_returns);
+
+           //Behavior Tertiary Delta Updates (for params)
+           t_delta_B_params.add(s_delta_B_params);
+           t_delta_B_paramtypes.add(s_delta_B_paramtypes);
+
+           if(code.get(cursor + 1).equals(keys.get("Model-DefMember-Key")) || code.get(cursor + 1).equals(keys.get("Terminate-Key"))){
+               //Tertiary Updates (behaviors)
+               t_delta_A_access.add(s_delta_A_access);
+               t_delta_AI.add(s_delta_AI);
+               t_delta_A_types.add(s_delta_A_types);
+               t_delta_B_access.add(s_delta_B_access);
+               t_delta_B_returns.add(s_delta_B_returns);
+               t_delta_BI.add(s_delta_BI);
+
+               //Quaternary Delta Updates (for params)
+               q_delta_B_params.add(t_delta_B_params);
+               q_delta_B_paramtypes.add(t_delta_B_paramtypes);
+
+               if(code.get(cursor + 1).equals(keys.get("Model-DefMember-Key"))){
+                   //No deltas for DefMembers for sake of simplicity
+                   cursor += 2;
+                   modelPT.DefMembers.add(filter(code.get(cursor)));
+                   cursor += 6;
+                   behavior_mode = false;
+
+                   //Reset secondary deltas  + param tertiary deltas
+                   s_delta_A_access = new ArrayList<>();
+                   s_delta_AI = new ArrayList<>();
+                   s_delta_A_types = new ArrayList<>();
+                   s_delta_B_access = new ArrayList<>();
+                   s_delta_B_returns = new ArrayList<>();
+                   s_delta_BI = new ArrayList<>();
+                   t_delta_B_params = new ArrayList<>();
+                   t_delta_B_paramtypes = new ArrayList<>();
+               }
+           }
+       }
 
        //ModelPT Updates
-       modelPT.AI = s_delta_AI;
-       modelPT.A_types = s_delta_A_types;
-       modelPT.A_access = s_delta_A_access;
-       modelPT.BI = s_delta_BI;
-       modelPT.B_returns = s_delta_B_returns;
-       modelPT.B_params = t_delta_B_params;
-       modelPT.B_paramtypes = t_delta_B_paramtypes;
-       modelPT.B_access = s_delta_B_access;
+       modelPT.AI = t_delta_AI;
+       modelPT.A_types = t_delta_A_types;
+       modelPT.A_access = t_delta_A_access;
+       modelPT.BI = t_delta_BI;
+       modelPT.B_returns = t_delta_B_returns;
+       modelPT.B_params = q_delta_B_params;
+       modelPT.B_paramtypes = q_delta_B_paramtypes;
+       modelPT.B_access = t_delta_B_access;
        return modelPT;
-   }
+}
 
 
    public InstanceParseTree ISP(){
