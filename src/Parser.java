@@ -227,7 +227,7 @@ public class Parser{
        final InstanceParseTree instPT = new InstanceParseTree();
 
        //Preprocessing
-       String[] header_el = code.get(cursor).split("(");
+       String[] header_el = code.get(cursor).split("\\(");
        instPT.INM = header_el[0];
        instPT.INI = filter(header_el[1]);
 
@@ -265,18 +265,18 @@ public class Parser{
            s_delta_def_members.add(p_delta_def_members);
 
            //Look up all lists for the current Def Member
-           for(MPT mpt : MPTs){
+           for(ModelParseTree mpt : MPTs){
                for(String defmem : mpt.DefMembers){
                    if(p_delta_def_members.equals(defmem)){
                        int defmem_index = mpt.DefMembers.indexOf(defmem);
-                       s_delta_AI.add(mpt.AI[index]);
-                       s_delta_A_types.add(mpt.A_types[index]);
-                       s_delta_A_access.add(mpt.A_access[index]);
-                       s_delta_BI.add(mpt.BI[index]);
-                       s_delta_B_returns.add(mpt.B_returns[index]);
-                       s_delta_B_access.add(mpt.B_access[index]);
-                       s_delta_B_params.add(mpt.B_params[index]);
-                       s_delta_B_paramtypes.add(mpt.B_paramtypes[index]);
+                       s_delta_AI.add(mpt.AI.get(defmem_index));
+                       s_delta_A_types.add(mpt.A_types.get(defmem_index));
+                       s_delta_A_access.add(mpt.A_access.get(defmem_index));
+                       s_delta_BI.add(mpt.BI.get(defmem_index));
+                       s_delta_B_returns.add(mpt.B_returns.get(defmem_index));
+                       s_delta_B_access.add(mpt.B_access.get(defmem_index));
+                       s_delta_B_params.add(mpt.B_params.get(defmem_index));
+                       s_delta_B_paramtypes.add(mpt.B_paramtypes.get(defmem_index));
                    }
                }
            }

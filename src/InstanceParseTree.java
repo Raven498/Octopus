@@ -3,7 +3,7 @@ public class InstanceParseTree{
     public String INM;
     public String INI;
     public ArrayList<String> In_Members = new ArrayList<>();
-    public ArrayList<String> Def_Members = new ArrayList<>();
+    public ArrayList<String> DefMembers = new ArrayList<>();
     public ArrayList<ArrayList<String>> AI = new ArrayList<>();
     public ArrayList<ArrayList<String>> A_types = new ArrayList<>();
     public ArrayList<ArrayList<String>> A_access = new ArrayList<>();
