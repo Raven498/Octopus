@@ -5,8 +5,8 @@ public class Parser{
    private final String[] filter = {":", "(", ")", ","};
    private int cursor = 0;
    private Map<String, String> keys = new HashMap<>();
-   private ArrayList<ModelParseTree> MPTs = new ArrayList<>();
-   private ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
+   public ArrayList<ModelParseTree> MPTs = new ArrayList<>();
+   public ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
 
    public Parser(ArrayList<String> code){
        keys.put("Model-Key", "new");
