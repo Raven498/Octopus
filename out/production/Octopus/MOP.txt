@@ -1,7 +1,7 @@
 new Robot:
 -> FlyingServo:
     - int speed, int flapPos, int glidePos int wingNum
-    - void createWings(), void fly()
+    - void createWings(), void fly(), int getGlidePos()
 -> WalkingServo:
     - int pos_left, int pos_right
     - void setPosLeft(int posLeft, int choice), void setPosRight(int posRight), int walk(int distance)

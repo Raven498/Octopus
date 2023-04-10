@@ -1,4 +1,5 @@
 //Syntax Processing, Parse Trees
+import java.beans.Expression;
 import java.util.*;
 public class Parser{
    private ArrayList<String> code;
@@ -7,6 +8,9 @@ public class Parser{
    private Map<String, String> keys = new HashMap<>();
    public ArrayList<ModelParseTree> MPTs = new ArrayList<>();
    public ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
+   public ArrayList<InstanceBehaviorCommand> IBCs = new ArrayList<>();
+   public ArrayList<InstanceAttributeCommand> IACs = new ArrayList<>();
+   public ArrayList<GeneralCommand> GCs = new ArrayList<>();
 
    public Parser(ArrayList<String> code){
        keys.put("Model-Key", "new");
@@ -14,8 +18,13 @@ public class Parser{
        keys.put("Model-B-End-Key", ")");
        keys.put("Model-DefMember-Key", "->");
        keys.put("In-Key", "create");
-       keys.put("IC-Key", "-->");
+       keys.put("IC-Key", ">");
        keys.put("Terminate-Key", "END");
+       keys.put("IAC-Key", "=");
+       keys.put("IBC-Key", "(");
+       keys.put("Expression-Key", "<");
+       keys.put("Expression-End-Key", ">");
+       keys.put("IBC-End-Key", ";");
        this.code = code;
    }
 
@@ -29,6 +38,17 @@ public class Parser{
        return word;
    }
 
+   /*
+   Utility method that looks up an IPT given a name
+    */
+    public InstanceParseTree searchIPT(String IN){
+        for(InstanceParseTree ipt : IPTs){
+            if(ipt.INI.equals(IN)){
+                return ipt;
+            }
+        }
+        return null;
+    }
 
    /*
    Model Syntax Process - called anytime the Model Key is triggered
@@ -294,6 +314,63 @@ public class Parser{
        return instPT;
    }
 
+   public InstanceBehaviorCommand IBC(String word){
+       InstanceBehaviorCommand IBC = new InstanceBehaviorCommand();
+       String[] major_ghost = word.split("\\(", 2);
+       IBC.IN = major_ghost[0].split("\\.")[0];
+       IBC.B = major_ghost[0].split("\\.")[1];
+       InstanceParseTree ipt = searchIPT(IBC.IN);
+       for(int i = 0; i < ipt.In_Members.size(); i++){
+           for(int j = 0; j < ipt.BI.get(i).size(); j++){
+               if(ipt.BI.get(i).get(j).equals(IBC.B)) {
+                   IBC.PN.addAll(ipt.B_params.get(i).get(j));
+               }
+           }
+       }
+
+       int i = 0;
+       while(!major_ghost[i].contains("IBC-End-Key")){
+           i += 1;
+           if(major_ghost[i].contains(keys.get("Expression-Key"))){
+                IBC.EPT.add(E(major_ghost[i]));
+           } else if(major_ghost[i].contains(keys.get("IBC-Key"))){
+                IBC.IBC.add(IBC(major_ghost[i]));
+           } else{
+               IBC.C.add(major_ghost[i]);
+           }
+       }
+       return IBC;
+   }
+
+   public ExpressionParseTree E(String word){
+        ExpressionParseTree EPT = new ExpressionParseTree();
+        String[] major_ghost = word.split("");
+        for(int i = 0; i < major_ghost.length; i++){ //TODO: Process embedded IBCs and Expressions
+            EPT.mode.add("mode" + i);
+            ArrayList<String> mode_elem = new ArrayList<>();
+            while(!major_ghost[i].equals(keys.get("Expression-End-Key"))){
+                mode_elem.add(major_ghost[i]);
+            }
+            EPT.ELEM.add(mode_elem);
+        }
+
+        return EPT;
+   }
+
+   //Recursive Syntax Process
+   public void ICSP(String word, String next_word){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
+       if(next_word.contains(keys.get("IAC-Key"))){
+           InstanceAttributeCommand IAC = new InstanceAttributeCommand();
+           IACs.add(IAC);
+       } else if(word.contains(keys.get("IBC-Key"))){
+           InstanceBehaviorCommand IBC = IBC(code.get(cursor));
+           IBCs.add(IBC);
+       } else{
+           GeneralCommand GC = new GeneralCommand();
+           GCs.add(GC);
+       }
+   }
+
    public void parse(){
        for(cursor = 0; cursor < code.size(); cursor++){
            if(code.get(cursor).equals(keys.get("Model-Key"))){
@@ -307,6 +384,10 @@ public class Parser{
                InstanceParseTree ipt = ISP();
                IPTs.add(ipt);
                System.out.println(ipt.toString());
+           }
+           else if(code.get(cursor).equals(keys.get("IC-Key"))){
+               cursor += 1;
+               ICSP(code.get(cursor), code.get(cursor + 1));
            }
        }
    }
