@@ -12,4 +12,6 @@ create -> Robot(robot):
     - WalkingServo: walkServo
 END
 
-> walkServo.setPosLeft(<3+4>, <9+3+<9+5>>);
+> robot -> flyServo.createWings(robot -> flyServo.getGlidePos());
+> robot -> walkServo.setPosLeft(4, 5);
+> robot -> walkServo.setPosRight(5);

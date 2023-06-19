@@ -60,7 +60,11 @@
     <watches-manager>
       <configuration name="Application">
         <watch expression="code" language="JAVA" />
+        <watch expression="cursor" language="JAVA" />
       </configuration>
     </watches-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Octopus$Unnamed.ic" NAME="Unnamed Coverage Results" MODIFIED="1686080056165" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

@@ -22,9 +22,13 @@ public class Parser{
        keys.put("Terminate-Key", "END");
        keys.put("IAC-Key", "=");
        keys.put("IBC-Key", "(");
+       keys.put("IBC-EscKey", "\\(");
        keys.put("Expression-Key", "<");
        keys.put("Expression-End-Key", ">");
-       keys.put("IBC-End-Key", ";");
+       keys.put("IC-End-Key", ";");
+       keys.put("InAccess-Key", ".");
+       keys.put("InAccess-EscKey", "\\.");
+       keys.put("InRef-Key", "->");
        this.code = code;
    }
 
@@ -314,32 +318,83 @@ public class Parser{
        return instPT;
    }
 
-   public InstanceBehaviorCommand IBC(String word){
+   public InstanceBehaviorCommand IBC(){
+       //IBC CSP Primary Deltas (except for IN, IM, B)
+       int primary_delta_PN = 0;
+       String primary_delta_V = "";
+       InstanceBehaviorCommand primary_delta_C;
+       ExpressionParseTree primary_delta_E;
        InstanceBehaviorCommand IBC = new InstanceBehaviorCommand();
-       String[] major_ghost = word.split("\\(", 2);
-       IBC.IN = major_ghost[0].split("\\.")[0];
-       IBC.B = major_ghost[0].split("\\.")[1];
-       InstanceParseTree ipt = searchIPT(IBC.IN);
-       for(int i = 0; i < ipt.In_Members.size(); i++){
-           for(int j = 0; j < ipt.BI.get(i).size(); j++){
-               if(ipt.BI.get(i).get(j).equals(IBC.B)) {
-                   IBC.PN.addAll(ipt.B_params.get(i).get(j));
+
+       //IBC CSP Secondary Deltas
+       ArrayList<Integer> secondary_delta_PN = new ArrayList<>();
+       ArrayList<String> secondary_delta_V = new ArrayList<>();
+       ArrayList<InstanceBehaviorCommand> secondary_delta_C = new ArrayList<>();
+       ArrayList<ExpressionParseTree> secondary_delta_E = new ArrayList<>();
+
+       //Header Processing
+       IBC.IN = code.get(cursor);
+
+       //Command Processing
+       cursor += 2;
+       String[] primary_ghost = code.get(cursor).split(keys.get("InAccess-EscKey"));
+       IBC.IM = primary_ghost[0];
+       String[] secondary_ghost = primary_ghost[1].split(keys.get("IBC-EscKey"));
+       code.set(cursor, secondary_ghost[0]);
+       code.add(cursor + 1, secondary_ghost[1]);
+       IBC.B = code.get(cursor);
+
+       //Parameter Processing
+       cursor += 1;
+       boolean endFound = false;
+       boolean valueMode = false;
+       while(!endFound){
+           primary_delta_PN += 1;
+           String currentText = code.get(cursor);
+           if(currentText.contains(keys.get("IC-End-Key"))){
+               if(filter(currentText).equals(keys.get("IC-End-Key"))){
+                   break;
+               }
+               currentText = currentText.replace(keys.get("IC-End-Key"), "");
+               endFound = true;
+               valueMode = true;
+           }
+           if(currentText.contains(keys.get("Expression-Key"))){
+               primary_delta_E = E(currentText);
+               secondary_delta_E.add(primary_delta_E);
+           }
+           else if(cursor <= code.size() - 3 && code.get(cursor + 2).contains(keys.get("IBC-Key"))){ //NEEDS TESTING
+               primary_delta_C = IBC();
+               secondary_delta_C.add(primary_delta_C);
+               if(code.get(cursor).contains(keys.get("IC-End-Key"))) {
+                   secondary_delta_PN.add(primary_delta_PN);
+                   continue;
                }
            }
+           else{
+               primary_delta_V = currentText;
+               secondary_delta_V.add(primary_delta_V);
+           }
+
+           if(valueMode){
+               secondary_delta_PN.add(primary_delta_PN);
+               continue;
+           }
+
+           cursor += 1;
+           secondary_delta_PN.add(primary_delta_PN);
        }
 
-       int i = 0;
-       while(!major_ghost[i].contains("IBC-End-Key")){
-           i += 1;
-           if(major_ghost[i].contains(keys.get("Expression-Key"))){
-                IBC.EPT.add(E(major_ghost[i]));
-           } else if(major_ghost[i].contains(keys.get("IBC-Key"))){
-                IBC.IBC.add(IBC(major_ghost[i]));
-           } else{
-               IBC.C.add(major_ghost[i]);
-           }
-       }
+       IBC.PN = secondary_delta_PN;
+       IBC.E = secondary_delta_E;
+       IBC.V = secondary_delta_V;
+       IBC.C = secondary_delta_C;
+
        return IBC;
+   }
+
+   public InstanceAttributeCommand IAC(){
+       return null;
    }
 
    public ExpressionParseTree E(String word){
@@ -358,16 +413,12 @@ public class Parser{
    }
 
    //Recursive Syntax Process
-   public void ICSP(String word, String next_word){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
-       if(next_word.contains(keys.get("IAC-Key"))){
-           InstanceAttributeCommand IAC = new InstanceAttributeCommand();
-           IACs.add(IAC);
-       } else if(word.contains(keys.get("IBC-Key"))){
-           InstanceBehaviorCommand IBC = IBC(code.get(cursor));
-           IBCs.add(IBC);
+   public void ICSP(String word){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
+       if(word.contains(keys.get("IBC-Key"))){
+           cursor -= 2;
+           IBCs.add(IBC());
        } else{
-           GeneralCommand GC = new GeneralCommand();
-           GCs.add(GC);
+           IACs.add(IAC());
        }
    }
 
@@ -386,8 +437,11 @@ public class Parser{
                System.out.println(ipt.toString());
            }
            else if(code.get(cursor).equals(keys.get("IC-Key"))){
-               cursor += 1;
-               ICSP(code.get(cursor), code.get(cursor + 1));
+               cursor += 3;
+               ICSP(code.get(cursor));
+               for(InstanceBehaviorCommand IBC : IBCs){
+                   System.out.println(IBC);
+               }
            }
        }
    }

@@ -11,3 +11,7 @@ create -> Robot(robot):
     - FlyingServo: flyServo
     - WalkingServo: walkServo
 END
+
+> robot -> flyServo.createWings(robot -> flyServo.getGlidePos());
+> robot -> walkServo.setPosLeft(4, 5);
+> robot -> walkServo.setPosRight(5);
