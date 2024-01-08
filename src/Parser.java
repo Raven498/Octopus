@@ -10,6 +10,7 @@ public class Parser{
    public ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
    public ArrayList<InstanceBehaviorCommand> IBCs = new ArrayList<>();
    public ArrayList<InstanceAttributeCommand> IACs = new ArrayList<>();
+    public ArrayList<BehaviorDef> BDs = new ArrayList<>();
    public ArrayList<GeneralCommand> GCs = new ArrayList<>();
 
    public Parser(ArrayList<String> code){
@@ -29,6 +30,7 @@ public class Parser{
        keys.put("InAccess-Key", ".");
        keys.put("InAccess-EscKey", "\\.");
        keys.put("InRef-Key", "->");
+       keys.put("BehaviorDef-Key", "void");
        this.code = code;
    }
 
@@ -49,6 +51,15 @@ public class Parser{
         for(InstanceParseTree ipt : IPTs){
             if(ipt.INI.equals(IN)){
                 return ipt;
+            }
+        }
+        return null;
+    }
+
+    public InstanceBehaviorCommand searchIBC(String B){
+        for(InstanceBehaviorCommand ibc : IBCs){
+            if(ibc.B.equals(B)){
+                return ibc;
             }
         }
         return null;
@@ -350,7 +361,7 @@ public class Parser{
        boolean valueMode = false;
        while(!endFound){
            primary_delta_PN += 1;
-           String currentText = code.get(cursor);
+           String currentText = filter(code.get(cursor));
            if(currentText.contains(keys.get("IC-End-Key"))){
                if(filter(currentText).equals(keys.get("IC-End-Key"))){
                    break;
@@ -422,6 +433,32 @@ public class Parser{
        }
    }
 
+   public BehaviorDef BD(){
+       ArrayList<String> paramNames = new ArrayList<>();
+       BehaviorDef BD = new BehaviorDef();
+       String name = code.get(cursor).split("\\(")[0];
+       InstanceBehaviorCommand IBC = searchIBC(name);
+       BD.name = name;
+
+       while(true){
+           cursor += 1;
+           if(Objects.equals(code.get(cursor), "int")){
+               continue;
+           }
+           paramNames.add(filter(code.get(cursor)));
+           System.out.println(filter(code.get(cursor)));
+           if(code.get(cursor).contains(keys.get("Model-B-End-Key"))){
+               break;
+           }
+       }
+
+       cursor += 6;
+       System.out.println(code.get(cursor));
+       BD.C.add(code.get(cursor));
+       BD.P = paramNames;
+       return BD;
+   }
+
    public void parse(){
        for(cursor = 0; cursor < code.size(); cursor++){
            if(code.get(cursor).equals(keys.get("Model-Key"))){
@@ -439,10 +476,19 @@ public class Parser{
            else if(code.get(cursor).equals(keys.get("IC-Key"))){
                cursor += 3;
                ICSP(code.get(cursor));
-               for(InstanceBehaviorCommand IBC : IBCs){
-                   System.out.println(IBC);
-               }
            }
+
+           else if(code.get(cursor).equals(keys.get("BehaviorDef-Key"))){
+               cursor += 1;
+               BDs.add(BD());
+           }
+
+       }
+       for(InstanceBehaviorCommand IBC : IBCs){
+           System.out.println(IBC);
+       }
+       for(BehaviorDef BD : BDs){
+           System.out.println(BD);
        }
    }
 }

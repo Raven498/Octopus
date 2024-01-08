@@ -7,11 +7,19 @@ new Robot:
     - void setPosLeft(int posLeft, int choice), void setPosRight(int posRight), int walk(int distance)
 END
 
+void setPosLeft(int posLeft, int choice):
+    > print(posLeft)
+END
+
+void setPosRight(int posRight):
+    > print(posRight)
+END
+
 create -> Robot(robot):
     - FlyingServo: flyServo
     - WalkingServo: walkServo
 END
 
 > robot -> flyServo.createWings(robot -> flyServo.getGlidePos());
-> robot -> walkServo.setPosLeft(4, 5);
-> robot -> walkServo.setPosRight(5);
+> robot -> walkServo.setPosLeft(1000000, 90000000);
+> robot -> walkServo.setPosRight(5000);
