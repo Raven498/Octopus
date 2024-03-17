@@ -10,8 +10,9 @@ public class Parser{
    public ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
    public ArrayList<InstanceBehaviorCommand> IBCs = new ArrayList<>();
    public ArrayList<InstanceAttributeCommand> IACs = new ArrayList<>();
-    public ArrayList<BehaviorDef> BDs = new ArrayList<>();
-   public ArrayList<GeneralCommand> GCs = new ArrayList<>();
+   public ArrayList<BehaviorDef> BDs = new ArrayList<>();
+   public final String[] gbc_keys = new String[]{"print", "return"};
+   public ArrayList<String> command_reg = new ArrayList<>();
 
    public Parser(ArrayList<String> code){
        keys.put("Model-Key", "new");
@@ -30,7 +31,7 @@ public class Parser{
        keys.put("InAccess-Key", ".");
        keys.put("InAccess-EscKey", "\\.");
        keys.put("InRef-Key", "->");
-       keys.put("BehaviorDef-Key", "void");
+       keys.put("BehaviorDef-Key", "def");
        this.code = code;
    }
 
@@ -56,10 +57,10 @@ public class Parser{
         return null;
     }
 
-    public InstanceBehaviorCommand searchIBC(String B){
-        for(InstanceBehaviorCommand ibc : IBCs){
-            if(ibc.B.equals(B)){
-                return ibc;
+    public ModelParseTree searchMPT(String MI){
+        for(ModelParseTree mpt : MPTs){
+            if(mpt.MI.equals(MI)){
+                return mpt;
             }
         }
         return null;
@@ -326,6 +327,8 @@ public class Parser{
        instPT.B_access = s_delta_B_access;
        instPT.B_params = s_delta_B_params;
        instPT.B_paramtypes = s_delta_B_paramtypes;
+
+       IPTs.add(instPT);
        return instPT;
    }
 
@@ -401,6 +404,8 @@ public class Parser{
        IBC.V = secondary_delta_V;
        IBC.C = secondary_delta_C;
 
+       command_reg.add(IBC.B + "-IBC");
+
        return IBC;
    }
 
@@ -423,38 +428,90 @@ public class Parser{
         return EPT;
    }
 
-   //Recursive Syntax Process
-   public void ICSP(String word){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
-       if(word.contains(keys.get("IBC-Key"))){
+   public GeneralBehaviorCommand GBC(String key){
+       GeneralBehaviorCommand GBC = new GeneralBehaviorCommand();
+       GBC.B = key;
+
+       //Parameter Processing
+       if(key.equals("print")){ //declaration split similar to the one used in MSP
+           String[] gbc_el = code.get(cursor).split("\\(");
+           String gbc_name = gbc_el[0];
+           String gbc_param = gbc_el[1];
+           code.set(cursor, gbc_name);
+           code.add(cursor + 1, gbc_param);
+       }
+
+       cursor += 1;
+
+       //Command Case
+       if(searchIPT(filter(code.get(cursor))) != null){
+           GBC.C.add(IBC());
+       }
+
+       //Value Case - for literals
+       //WIP
+
+       System.out.println(GBC);
+       command_reg.add(GBC.B + "-GBC");
+       return GBC;
+   }
+
+   //Command Syntax Process Controller
+   public void CSPC(){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
+       cursor += 1;
+       for(String key : gbc_keys){
+           if(code.get(cursor).contains(key)){
+              System.out.println("GBC");
+              GeneralBehaviorCommand GBC = GBC(key);
+              System.out.println(GBC);
+              return;
+           }
+       }
+
+       cursor += 2;
+       if(code.get(cursor).contains(keys.get("IBC-Key"))){
+           System.out.println("IBC");
            cursor -= 2;
            IBCs.add(IBC());
-       } else{
-           IACs.add(IAC());
+       }
+
+       cursor += 1;
+       if(code.get(cursor).contains(keys.get("IAC-Key"))){
+           System.out.println("IAC");
+           //IACs.add(IAC());
        }
    }
 
    public BehaviorDef BD(){
        ArrayList<String> paramNames = new ArrayList<>();
        BehaviorDef BD = new BehaviorDef();
-       String name = code.get(cursor).split("\\(")[0];
-       InstanceBehaviorCommand IBC = searchIBC(name);
-       BD.name = name;
+       BD.RT = code.get(cursor);
+       cursor += 1;
+
+       String[] dec_el = code.get(cursor).split("\\(");
+       String dec_name = dec_el[0];
+       String dec_param = dec_el[1];
+       code.set(cursor, dec_name);
+       code.add(cursor + 1, dec_param);
+       BD.B = dec_name;
 
        while(true){
            cursor += 1;
            if(Objects.equals(code.get(cursor), "int")){
                continue;
            }
-           paramNames.add(filter(code.get(cursor)));
-           System.out.println(filter(code.get(cursor)));
            if(code.get(cursor).contains(keys.get("Model-B-End-Key"))){
                break;
            }
+           paramNames.add(filter(code.get(cursor)));
+           System.out.println(filter(code.get(cursor)));
        }
 
        cursor += 6;
        System.out.println(code.get(cursor));
-       BD.C.add(code.get(cursor));
+       BD.C.add(GBC(code.get(cursor)));
+       cursor += 1;
+       
        BD.P = paramNames;
        return BD;
    }
@@ -474,10 +531,8 @@ public class Parser{
                System.out.println(ipt.toString());
            }
            else if(code.get(cursor).equals(keys.get("IC-Key"))){
-               cursor += 3;
-               ICSP(code.get(cursor));
+               CSPC();
            }
-
            else if(code.get(cursor).equals(keys.get("BehaviorDef-Key"))){
                cursor += 1;
                BDs.add(BD());
@@ -488,8 +543,12 @@ public class Parser{
            System.out.println(IBC);
        }
        for(BehaviorDef BD : BDs){
-           System.out.println(BD);
+           System.out.println("BD: " + BD);
        }
+   }
+
+   public ArrayList<String> getCommandReg(){
+       return command_reg;
    }
 }
 

@@ -10,8 +10,12 @@ public class Main{
 
         Parser parser = new Parser(code);
         parser.parse();
+        System.out.println(parser.getCommandReg());
 
-        Executor executor = new Executor(parser.IBCs, parser.BDs, parser.MPTs);
+
+        /*
+        Executor executor = new Executor(parser.IBCs, parser.BDs, parser.MPTs, parser.getCommandReg());
         executor.execute();
+*/
     }
 }

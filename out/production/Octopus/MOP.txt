@@ -1,18 +1,14 @@
 new Robot:
 -> FlyingServo:
-    - int speed, int flapPos, int glidePos int wingNum
+    - int speed, int flapPos, int glidePos, int wingNum
     - void createWings(), void fly(), int getGlidePos()
 -> WalkingServo:
     - int pos_left, int pos_right
     - void setPosLeft(int posLeft, int choice), void setPosRight(int posRight), int walk(int distance)
 END
 
-void setPosLeft(int posLeft, int choice):
-    > print(posLeft)
-END
-
-void setPosRight(int posRight):
-    > print(posRight)
+def int getGlidePos():
+    > return glidePos;
 END
 
 create -> Robot(robot):
@@ -20,6 +16,4 @@ create -> Robot(robot):
     - WalkingServo: walkServo
 END
 
-> robot -> flyServo.createWings(robot -> flyServo.getGlidePos());
-> robot -> walkServo.setPosLeft(1000000, 90000000);
-> robot -> walkServo.setPosRight(5000);
+> print(robot -> flyServo.getGlidePos());

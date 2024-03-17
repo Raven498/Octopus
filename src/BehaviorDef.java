@@ -1,11 +1,13 @@
 import java.util.ArrayList;
 
 public class BehaviorDef {
-    public String name;
+    public String B;
     public ArrayList<String> P = new ArrayList<>();
-    public ArrayList<String> C = new ArrayList<>();
+    public ArrayList<GeneralBehaviorCommand> C = new ArrayList<>();
+    public String RT;
+    public String RV;
 
     public String toString(){
-        return name + " " + P + " " + C;
+        return B + " " + P + " " + C + " " + RT + " " + RV;
     }
 }
