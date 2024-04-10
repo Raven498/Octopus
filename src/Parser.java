@@ -10,6 +10,7 @@ public class Parser{
    public ArrayList<InstanceParseTree> IPTs = new ArrayList<>();
    public ArrayList<InstanceBehaviorCommand> IBCs = new ArrayList<>();
    public ArrayList<InstanceAttributeCommand> IACs = new ArrayList<>();
+   public ArrayList<GeneralBehaviorCommand> GBCs = new ArrayList<>();
    public ArrayList<BehaviorDef> BDs = new ArrayList<>();
    public final String[] gbc_keys = new String[]{"print", "return"};
    public ArrayList<String> command_reg = new ArrayList<>();
@@ -175,7 +176,7 @@ public class Parser{
                s_delta_B_paramtypes.add(p_delta_B_paramtypes);
            } else{
                String[] delta_elements = code.get(cursor).split("\\(");
-               System.out.println(Arrays.toString(delta_elements));
+               //System.out.println(Arrays.toString(delta_elements));
                //Set name delta
                p_delta_BI = delta_elements[0];
 
@@ -404,8 +405,8 @@ public class Parser{
        IBC.V = secondary_delta_V;
        IBC.C = secondary_delta_C;
 
+       IBCs.add(IBC);
        command_reg.add(IBC.B + "-IBC");
-
        return IBC;
    }
 
@@ -451,35 +452,41 @@ public class Parser{
        //Value Case - for literals
        //WIP
 
-       System.out.println(GBC);
-       command_reg.add(GBC.B + "-GBC");
+       GBCs.add(GBC);
+       //System.out.println(GBC);
        return GBC;
    }
 
    //Command Syntax Process Controller
-   public void CSPC(){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
+   public String CSPC(){ //TODO: Turn word parameters into an array - allows us to isolate any expression operands
        cursor += 1;
+       String ID = "";
        for(String key : gbc_keys){
            if(code.get(cursor).contains(key)){
-              System.out.println("GBC");
               GeneralBehaviorCommand GBC = GBC(key);
-              System.out.println(GBC);
-              return;
+              ID = GBC.B + "-GBC";
+              command_reg.add(ID);
+              //System.out.println(ID);
+              return ID;
            }
        }
 
-       cursor += 2;
-       if(code.get(cursor).contains(keys.get("IBC-Key"))){
-           System.out.println("IBC");
-           cursor -= 2;
-           IBCs.add(IBC());
+       cursor += 1;
+       if(code.get(cursor).contains(keys.get("InRef-Key"))){
+           cursor -= 1;
+           InstanceBehaviorCommand IBC = IBC();
+           ID = IBC.B + "-IBC";
+           command_reg.add(ID);
+           //System.out.println(ID);
+           return ID;
        }
 
        cursor += 1;
        if(code.get(cursor).contains(keys.get("IAC-Key"))){
-           System.out.println("IAC");
+           //System.out.println("IAC");
            //IACs.add(IAC());
        }
+       return "";
    }
 
    public BehaviorDef BD(){
@@ -495,6 +502,7 @@ public class Parser{
        code.add(cursor + 1, dec_param);
        BD.B = dec_name;
 
+       //Parameter Processing
        while(true){
            cursor += 1;
            if(Objects.equals(code.get(cursor), "int")){
@@ -504,12 +512,20 @@ public class Parser{
                break;
            }
            paramNames.add(filter(code.get(cursor)));
-           System.out.println(filter(code.get(cursor)));
+           //System.out.println(filter(code.get(cursor)));
        }
 
-       cursor += 6;
-       System.out.println(code.get(cursor));
-       BD.C.add(GBC(code.get(cursor)));
+       cursor += 5;
+       //System.out.println(code.get(cursor));
+       while(!code.get(cursor).equals(keys.get("Terminate-Key"))){
+           if(code.get(cursor).equals(keys.get("IC-Key"))){
+               String ID = CSPC(); //need to add command to BD
+               BD.C.add(ID);
+               command_reg.remove(ID);
+               continue;
+           }
+           cursor += 1;
+       }
        cursor += 1;
        
        BD.P = paramNames;
@@ -522,28 +538,30 @@ public class Parser{
                cursor += 1;
                ModelParseTree mpt = MSP();
                MPTs.add(mpt);
-               System.out.println(mpt.toString());
+               System.out.println("MODEL: " + mpt.toString());
            }
            else if(code.get(cursor).equals(keys.get("In-Key"))){
                cursor += 2;
                InstanceParseTree ipt = ISP();
                IPTs.add(ipt);
-               System.out.println(ipt.toString());
+               System.out.println("INSTANCE " + ipt.toString());
            }
            else if(code.get(cursor).equals(keys.get("IC-Key"))){
                CSPC();
            }
            else if(code.get(cursor).equals(keys.get("BehaviorDef-Key"))){
                cursor += 1;
-               BDs.add(BD());
+               BehaviorDef BD = BD();
+               BDs.add(BD);
+               System.out.println("BD: " + BD.toString());
            }
 
        }
        for(InstanceBehaviorCommand IBC : IBCs){
-           System.out.println(IBC);
+           System.out.println("IBC " + IBC.toString());
        }
-       for(BehaviorDef BD : BDs){
-           System.out.println("BD: " + BD);
+       for(GeneralBehaviorCommand GBC : GBCs){
+           System.out.println("GBC " + GBC.toString());
        }
    }
 
