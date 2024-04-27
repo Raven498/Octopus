@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 
 public class BehaviorDef {
+    public String M;
     public String B;
     public ArrayList<String> P = new ArrayList<>();
     public ArrayList<String> C = new ArrayList<>();
@@ -8,6 +9,6 @@ public class BehaviorDef {
     public String RV;
 
     public String toString(){
-        return B + " " + P + " " + C + " " + RT + " " + RV;
+        return M + " " + B + " " + P + " " + C + " " + RT + " " + RV;
     }
 }

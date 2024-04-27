@@ -1,14 +1,17 @@
 new Robot:
 -> FlyingServo:
-    - int speed, int flapPos, int glidePos, int wingNum
+    - public int speed = 5, public int flapPos = 10, int glidePos, int wingNum = 3
     - void createWings(), void fly(), int getGlidePos()
 -> WalkingServo:
-    - int pos_left, int pos_right
+    - int pos_left = 6, int pos_right = 6
     - void setPosLeft(int posLeft, int choice), void setPosRight(int posRight), int walk(int distance)
+-> SittingServo:
+    - int angle = 9, int pos = 2, int rpm = 2
+    - void sit(), void stand(), void setAngle(int angle)
 END
 
-def int getGlidePos():
-    > print("This shit sucks ngl");
+def int Robot.getGlidePos():
+    > print(glidePos);
     > return glidePos;
 END
 

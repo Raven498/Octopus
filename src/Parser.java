@@ -88,6 +88,7 @@ public class Parser{
        String p_delta_A_access = "";
        String p_delta_AI = "";
        String p_delta_A_types = "";
+       String p_delta_A_values = "";
        String p_delta_B_access = "";
        String p_delta_B_returns = "";
        String p_delta_BI = "";
@@ -98,6 +99,7 @@ public class Parser{
        ArrayList<String> s_delta_A_access = new ArrayList<>();
        ArrayList<String> s_delta_AI = new ArrayList<>();
        ArrayList<String> s_delta_A_types = new ArrayList<>();
+       ArrayList<String> s_delta_A_values = new ArrayList<>();
        ArrayList<String> s_delta_B_access = new ArrayList<>();
        ArrayList<String> s_delta_B_returns = new ArrayList<>();
        ArrayList<String> s_delta_BI = new ArrayList<>();
@@ -106,6 +108,7 @@ public class Parser{
        ArrayList<ArrayList<String>> t_delta_A_access = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_AI = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_A_types = new ArrayList<>();
+       ArrayList<ArrayList<String>> t_delta_A_values = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_B_access = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_B_returns = new ArrayList<>();
        ArrayList<ArrayList<String>> t_delta_BI = new ArrayList<>();
@@ -138,13 +141,21 @@ public class Parser{
                        p_delta_A_access = code.get(cursor);
                        cursor += 1;
                        p_delta_A_types = code.get(cursor);
+                       cursor += 1;
                    }
                    p_delta_AI = filter(code.get(cursor));
+                   if(code.get(cursor + 1).equals("=")){ //TODO: Codify as separate key
+                       cursor += 2;
+                       p_delta_A_values = filter(code.get(cursor));
+                   } else{
+                       p_delta_A_values = "null";
+                   }
 
                    //Attribute Secondary Delta Updates
                    s_delta_A_access.add(p_delta_A_access);
                    s_delta_A_types.add(p_delta_A_types);
                    s_delta_AI.add(p_delta_AI);
+                   s_delta_A_values.add(p_delta_A_values);
                }
                cursor += 1;
            }
@@ -217,6 +228,7 @@ public class Parser{
                t_delta_A_access.add(s_delta_A_access);
                t_delta_AI.add(s_delta_AI);
                t_delta_A_types.add(s_delta_A_types);
+               t_delta_A_values.add(s_delta_A_values);
                t_delta_B_access.add(s_delta_B_access);
                t_delta_B_returns.add(s_delta_B_returns);
                t_delta_BI.add(s_delta_BI);
@@ -236,6 +248,7 @@ public class Parser{
                    s_delta_A_access = new ArrayList<>();
                    s_delta_AI = new ArrayList<>();
                    s_delta_A_types = new ArrayList<>();
+                   s_delta_A_values = new ArrayList<>();
                    s_delta_B_access = new ArrayList<>();
                    s_delta_B_returns = new ArrayList<>();
                    s_delta_BI = new ArrayList<>();
@@ -249,6 +262,7 @@ public class Parser{
        modelPT.AI = t_delta_AI;
        modelPT.A_types = t_delta_A_types;
        modelPT.A_access = t_delta_A_access;
+       modelPT.A_values = t_delta_A_values;
        modelPT.BI = t_delta_BI;
        modelPT.B_returns = t_delta_B_returns;
        modelPT.B_params = q_delta_B_params;
@@ -276,6 +290,7 @@ public class Parser{
        ArrayList<ArrayList<String>> s_delta_AI = new ArrayList<>();
        ArrayList<ArrayList<String>> s_delta_A_types = new ArrayList<>();
        ArrayList<ArrayList<String>> s_delta_A_access = new ArrayList<>();
+       ArrayList<ArrayList<String>> s_delta_A_values = new ArrayList<>();
        ArrayList<ArrayList<String>> s_delta_BI = new ArrayList<>();
        ArrayList<ArrayList<String>> s_delta_B_access = new ArrayList<>();
        ArrayList<ArrayList<String>> s_delta_B_returns = new ArrayList<>();
@@ -307,6 +322,7 @@ public class Parser{
                        s_delta_AI.add(mpt.AI.get(defmem_index));
                        s_delta_A_types.add(mpt.A_types.get(defmem_index));
                        s_delta_A_access.add(mpt.A_access.get(defmem_index));
+                       s_delta_A_values.add(mpt.A_values.get(defmem_index));
                        s_delta_BI.add(mpt.BI.get(defmem_index));
                        s_delta_B_returns.add(mpt.B_returns.get(defmem_index));
                        s_delta_B_access.add(mpt.B_access.get(defmem_index));
@@ -315,6 +331,22 @@ public class Parser{
                    }
                }
            }
+
+           cursor += 1;
+           while(code.get(cursor).equals("")){
+               cursor += 1;
+           }
+           cursor += 1;
+           for(ModelParseTree mpt : MPTs){
+               for(String defmem : mpt.DefMembers){
+                   if(p_delta_def_members.equals(defmem)){
+                       int defmem_index = mpt.DefMembers.indexOf(defmem);
+                       int ai_index = mpt.AI.get(defmem_index).indexOf(code.get(cursor));
+                       
+                   }
+               }
+           }
+
        }
 
        //InstancePT Updates
@@ -323,6 +355,7 @@ public class Parser{
        instPT.AI = s_delta_AI;
        instPT.A_types = s_delta_A_types;
        instPT.A_access = s_delta_A_access;
+       instPT.A_values = s_delta_A_values;
        instPT.BI = s_delta_BI;
        instPT.B_returns = s_delta_B_returns;
        instPT.B_access = s_delta_B_access;
@@ -495,10 +528,13 @@ public class Parser{
        BD.RT = code.get(cursor);
        cursor += 1;
 
-       String[] dec_el = code.get(cursor).split("\\(");
-       String dec_name = dec_el[0];
-       String dec_param = dec_el[1];
-       code.set(cursor, dec_name);
+       String[] primary_ghost = code.get(cursor).split("\\.");
+       BD.M = primary_ghost[0];
+
+       String[] secondary_ghost = primary_ghost[1].split("\\(");
+       String dec_name = secondary_ghost[0];
+       String dec_param = secondary_ghost[1];
+       code.set(cursor, BD.M + "." + dec_name);
        code.add(cursor + 1, dec_param);
        BD.B = dec_name;
 
